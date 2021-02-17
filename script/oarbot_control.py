@@ -11,7 +11,8 @@ class OarbotKinematics():
         self.r = 101.6/1000 # wheel radius
         self.l = 214.63/1000 # half length of chassis
         self.w = 220.08/1000 # half width of the chassis
-        self.ratio = 15/21 # gear ratio of chain drive
+        self.chain_drive_ratio = 15/21 # gear ratio of chain drive
+        self.gear_ratio = 1/26
 
 class OarbotControl():
     def __init__(self):
@@ -41,13 +42,17 @@ class OarbotControl():
             v_ang = msg.angular
 
             # angular velocity of front left motor
-            u1 = 1/self.oarbot.r * (v_lin.x - v_lin.y - (self.oarbot.l+self.oarbot.w)*v_ang.z) * 1/self.oarbot.ratio
+            u1 = 1/self.oarbot.r * (v_lin.x - v_lin.y - (self.oarbot.l+self.oarbot.w)*v_ang.z) * 1/self.oarbot.chain_drive_ratio * \
+            1/self.gear_ratio
             # angular velocity of front right motor
-            u2 = 1/self.oarbot.r * (v_lin.x + v_lin.y + (self.oarbot.l+self.oarbot.w)*v_ang.z) * 1/self.oarbot.ratio
+            u2 = 1/self.oarbot.r * (v_lin.x + v_lin.y + (self.oarbot.l+self.oarbot.w)*v_ang.z) * 1/self.oarbot.chain_drive_ratio * \
+            1/self.gear_ratio
             # angular velocity of rear right motor
-            u3 = 1/self.oarbot.r * (v_lin.x - v_lin.y + (self.oarbot.l+self.oarbot.w)*v_ang.z) * 1/self.oarbot.ratio
+            u3 = 1/self.oarbot.r * (v_lin.x - v_lin.y + (self.oarbot.l+self.oarbot.w)*v_ang.z) * 1/self.oarbot.chain_drive_ratio * \
+            1/self.gear_ratio
             # angular velocity of rear left motor
-            u4 = 1/self.oarbot.r * (v_lin.x + v_lin.y - (self.oarbot.l+self.oarbot.w)*v_ang.z) * 1/self.oarbot.ratio
+            u4 = 1/self.oarbot.r * (v_lin.x + v_lin.y - (self.oarbot.l+self.oarbot.w)*v_ang.z) * 1/self.oarbot.chain_drive_ratio * \
+            1/self.gear_ratio
 
             # TODO: add emergency stop if v too large
             if abs(u1) > 1000 or abs(u2) > 1000 or abs(u3) > 1000 or abs(u4) > 1000:
@@ -75,9 +80,10 @@ class OarbotControl():
         u3a = u3
         u4a = u4
 
-        self.vel_feedback.vx = self.oarbot.r/4 * (u1a + u2a + u3a + u4a) * self.oarbot.ratio
-        self.vel_feedback.vy = self.oarbot.r/4 * (-u1a + u2a - u3a + u4a) * self.oarbot.ratio
-        self.vel_feedback.wz = self.oarbot.r/(4*(self.oarbot.l + self.oarbot.w)) * (-u1a + u2a + u3a - u4a) * self.oarbot.ratio
+        self.vel_feedback.vx = self.oarbot.r/4 * (u1a + u2a + u3a + u4a) * self.oarbot.chain_drive_ratio * self.gear_ratio
+        self.vel_feedback.vy = self.oarbot.r/4 * (-u1a + u2a - u3a + u4a) * self.oarbot.chain_drive_ratio * self.gear_ratio
+        self.vel_feedback.wz = self.oarbot.r/(4*(self.oarbot.l + self.oarbot.w)) * (-u1a + u2a + u3a - u4a) * \
+        self.oarbot.chain_drive_ratio * self.gear_ratio
         self.vel_pub.publish(self.vel_feedback)
 
     #TODO: add motor status feedback
